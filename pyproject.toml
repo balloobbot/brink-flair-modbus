@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "brink-flair-modbus"
+version = "0.0.0"
+description = "Read and drive a Brink Flair heat recovery appliance over Modbus."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "brink-flair-modbus contributors" }]
+keywords = [
+    "modbus",
+    "brink",
+    "flair",
+    "uwa2",
+    "hra",
+    "ventilation",
+    "heat-recovery",
+    "home-assistant",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Home Automation",
+]
+dependencies = ["modbus-connection>=4.11.1"]
+
+[project.optional-dependencies]
+tmodbus = ["modbus-connection[tmodbus]>=4.11.1"]
+
+[project.urls]
+Homepage = "https://github.com/balloobbot/brink-flair-modbus"
+Issues = "https://github.com/balloobbot/brink-flair-modbus/issues"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.15",
+    "mypy>=1.14",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/brink_flair_modbus"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests", "script"]
