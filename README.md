@@ -71,21 +71,42 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
-### Over an RTU-to-TCP gateway
+### Over the network
 
-The appliance has no Ethernet of its own, but a serial gateway in front of the
-RS-485 line reaches it over the network. The gateway forwards RTU frames, so
-the framing stays `rtu` — the only line that changes is the connection:
+The appliance has no Ethernet of its own, so reaching it over the network
+means putting a box in front of the RS-485 line. There are two kinds, and
+they do not speak the same protocol — which one you have decides the framing:
+
+| The box | What crosses the network | Connection |
+| --- | --- | --- |
+| A **transparent serial server**, forwarding bytes (USR-TCP232, Waveshare in TCP-server mode, `ser2net`) | RTU frames unchanged, CRC and all | `ModbusTcpParams(host=…, framer="rtu")` |
+| A **Modbus gateway**, converting protocols (Moxa MGate, Waveshare in Modbus-gateway mode) | Modbus TCP, with an MBAP header and no CRC | `ModbusTcpParams(host=…, framer="socket")` |
 
 ```python
 from modbus_connection import ModbusTcpParams
 
+# A transparent serial server on the RS-485 line.
 connection = ModbusConnection(ModbusTcpParams(host="192.168.1.50", framer="rtu"))
+
+# A Modbus gateway converting to RTU on the serial side.
+connection = ModbusConnection(ModbusTcpParams(host="192.168.1.50", framer="socket"))
 ```
 
-Set `framer="rtu"` explicitly. `ModbusTcpParams` defaults to `socket`, which is
-native Modbus TCP — the right choice only for a gateway configured to
-translate rather than to forward.
+Many boxes do either, depending on how they are configured, and nothing on the
+wire announces which. If reads time out against a box you believe is wired
+correctly, try the other framing before suspecting the appliance.
+
+`framer="socket"` is `ModbusTcpParams`'s default, so a gateway needs only the
+host. Nothing else in this library changes with the transport.
+
+A transparent server can also be reached as a serial target, since
+modbus-connection's serial transport takes a URL — `socket://host:port`,
+`rfc2217://host:port`, or `esphome://host/?port_name=…` for an
+[ESPHome serial proxy](https://esphome.io/projects/?type=serial). Prefer
+`ModbusTcpParams(framer="rtu")` where something else may reach the same box:
+consumers that describe one endpoint the same way share a connection, and on
+a half-duplex line that sharing is what keeps two of them from interleaving
+frames.
 
 One appliance object models one appliance, so build one per unit id. Several
 cascaded appliances reach the consumer as several unit ids on one connection:
@@ -161,7 +182,8 @@ is the quickest way to see whether it is wired and addressed correctly:
 
 ```bash
 uv run script/query.py /dev/ttyUSB0 --unit 20 --baudrate 19200 --parity E
-uv run script/query.py 192.168.1.50 --transport tcp --unit 20
+uv run script/query.py 192.168.1.50 --transport tcp --unit 20          # serial server
+uv run script/query.py 192.168.1.50 --transport tcp --framer socket --unit 20  # gateway
 ```
 
 It probes for the optional modules, prints each sub-system under its own

@@ -10,7 +10,8 @@ beyond how to reach it.
 ::
 
     uv run script/query.py /dev/ttyUSB0 --unit 20 --baudrate 19200 --parity E
-    uv run script/query.py 192.168.1.50 --transport tcp --unit 20
+    uv run script/query.py 192.168.1.50 --transport tcp --unit 20  # framer rtu
+    uv run script/query.py 192.168.1.50 --transport tcp --framer socket --unit 20
 """
 
 from __future__ import annotations
@@ -28,10 +29,14 @@ from modbus_connection.cli_helper import (
 
 from brink_flair_modbus import BrinkFlair
 
-# The appliance speaks Modbus RTU on RS-485 and nothing else. Over TCP it is
-# reached through a gateway that forwards those RTU frames, so the framing
-# stays rtu either way. The first pair is what --transport defaults to.
-CONNECTIONS = (("serial", "rtu"), ("tcp", "rtu"))
+# The appliance speaks Modbus RTU on RS-485 and nothing else, so a serial
+# adapter is the direct case and the default. The two TCP pairs are the two
+# kinds of box people put in front of the line, which differ in what goes on
+# the network: a transparent serial server forwards the RTU frames as they
+# are (rtu), while a Modbus gateway terminates Modbus TCP and re-frames to
+# RTU on the serial side (socket). Only the box's own configuration says
+# which it is doing.
+CONNECTIONS = (("serial", "rtu"), ("tcp", "rtu"), ("tcp", "socket"))
 
 DEFAULT_UNIT = 20
 """The appliance's factory slave address (setting 14.2)."""
