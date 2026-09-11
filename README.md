@@ -120,7 +120,7 @@ failed, so one missing sub-system does not cost you the rest of the poll.
 ```python
 report = await appliance.async_update_readings()
 report.updated  # ['measurements', 'control', 'co2_sensors', ...]
-report.failed   # {'extension': IllegalDataAddressError(...)}
+report.failed  # {'extension': IllegalDataAddressError(...)}
 ```
 
 `await appliance.async_read_raw()` returns every register the appliance is read
