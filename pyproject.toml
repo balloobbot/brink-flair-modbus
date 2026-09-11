@@ -24,10 +24,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Home Automation",
 ]
-dependencies = ["modbus-connection>=4.11.1"]
+dependencies = ["modbus-connection>=4.10.0"]
 
 [project.optional-dependencies]
-tmodbus = ["modbus-connection[tmodbus]>=4.11.1"]
+tmodbus = ["modbus-connection[tmodbus]>=4.10.0"]
 
 [project.urls]
 Homepage = "https://github.com/balloobbot/brink-flair-modbus"

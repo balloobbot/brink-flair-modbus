@@ -51,3 +51,15 @@ jobs:
           assert v == '${{ matrix.python-version }}', v"
       - name: Run tests
         run: uv run pytest
+
+  floor:
+    # Home Assistant pins modbus-connection, and the integration that vendors
+    # this library gets whatever that pin is. Prove the declared floor works.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+      - name: Install the oldest dependencies the project allows
+        run: uv sync --extra tmodbus --resolution lowest-direct
+      - name: Run tests
+        run: uv run pytest
