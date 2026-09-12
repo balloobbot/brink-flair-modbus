@@ -8,6 +8,7 @@ against hardware. These tests walk the same path with no device.
 from __future__ import annotations
 
 import io
+import json
 
 from modbus_connection.cli_helper import print_component
 from modbus_connection.mock import MockModbusUnit
@@ -63,3 +64,21 @@ async def test_nothing_raises_on_an_appliance_that_answered_zero(
         print_component(component, file=out)
 
     assert out.getvalue()
+
+
+async def test_the_raw_dump_survives_being_written_down(appliance: BrinkFlair) -> None:
+    """``--raw`` prints this, and an issue carries it as JSON.
+
+    JSON has no integer keys, so every address is written as a string. A
+    maintainer replaying the dump needs them to come back as the numbers
+    they were, which is what modbus-connection's ``load_raw`` does.
+    """
+    raw = await appliance.async_read_raw()
+
+    restored = json.loads(json.dumps(raw))
+
+    assert restored.keys() == raw.keys()
+    assert {
+        space: {int(address): value for address, value in values.items()}
+        for space, values in restored.items()
+    } == raw

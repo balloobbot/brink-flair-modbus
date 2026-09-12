@@ -12,12 +12,17 @@ beyond how to reach it.
     uv run script/query.py /dev/ttyUSB0 --unit 20 --baudrate 19200 --parity E
     uv run script/query.py socket://192.168.1.50:8899 --unit 20 --baudrate 19200
     uv run script/query.py 192.168.1.50 --transport tcp --unit 20
+
+``--raw`` adds the registers the appliance answered with, undecoded, as JSON.
+Attach that to an issue: it says what the appliance really sent, whatever
+this library made of it, and it loads straight into the tests.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 
 from modbus_connection import ModbusError
 from modbus_connection.cli_helper import (
@@ -45,6 +50,11 @@ async def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     add_connection_args(parser, connections=CONNECTIONS)
     parser.add_argument("--unit", type=int, default=DEFAULT_UNIT, help="Modbus unit id")
+    parser.add_argument(
+        "--raw",
+        action="store_true",
+        help="also dump every register read, undecoded, as JSON (reads twice)",
+    )
     args = parser.parse_args()
 
     try:
@@ -55,8 +65,13 @@ async def main() -> int:
 
     counting = CountingUnit(connection.for_unit(args.unit))
     appliance = BrinkFlair(counting)
+    raw: dict[str, dict[int, int | bool]] | None = None
     try:
         report = await appliance.async_update()
+        if args.raw:
+            # A second pass: async_update reports what failed where a raw read
+            # would raise, and a dump is wanted most where something is wrong.
+            raw = await appliance.async_read_raw()
     except ModbusError as err:
         print(f"Could not read the appliance: {err}")
         return 1
@@ -80,6 +95,11 @@ async def main() -> int:
     for name, failure in sorted(report.failed.items()):
         print(f"\n{name} did not answer: {failure}")
     print(f"\n{counting.reads} Modbus reads")
+
+    if raw is not None:
+        print("\nRaw registers")
+        print("-------------")
+        print(json.dumps(raw, indent=2, sort_keys=True))
     return 0
 
 

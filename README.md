@@ -190,6 +190,18 @@ It probes for the optional modules, prints each sub-system under its own
 heading, names any that did not answer, and finishes with the read count — so
 the numbers above are visible against real hardware and not only in the tests.
 
+`--raw` adds every register the appliance answered with, undecoded, as JSON:
+
+```bash
+uv run script/query.py /dev/ttyUSB0 --unit 20 --baudrate 19200 --parity E --raw
+```
+
+Attach that to an issue. It says what the appliance really sent, whatever
+this library made of it, and it loads into a test with modbus-connection's
+[`load_raw`](https://home-assistant-libs.github.io/modbus-connection/patterns/testing/#replaying-a-raw-snapshot),
+so a report becomes a regression test with no hardware. It costs a second
+pass over the registers, which is why it is not the default.
+
 ## Writing
 
 ### Settings
