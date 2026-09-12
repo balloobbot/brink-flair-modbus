@@ -75,38 +75,35 @@ asyncio.run(main())
 
 The appliance has no Ethernet of its own, so reaching it over the network
 means putting a box in front of the RS-485 line. There are two kinds, and
-they do not speak the same protocol — which one you have decides the framing:
+they do not speak the same protocol — which one you have decides the parameters:
 
 | The box | What crosses the network | Connection |
 | --- | --- | --- |
-| A **transparent serial server**, forwarding bytes (USR-TCP232, Waveshare in TCP-server mode, `ser2net`) | RTU frames unchanged, CRC and all | `ModbusTcpParams(host=…, framer="rtu")` |
-| A **Modbus gateway**, converting protocols (Moxa MGate, Waveshare in Modbus-gateway mode) | Modbus TCP, with an MBAP header and no CRC | `ModbusTcpParams(host=…, framer="socket")` |
+| A **serial server**, forwarding bytes (USR-TCP232, Waveshare in TCP-server mode, `ser2net`) | RTU frames unchanged, CRC and all | `ModbusSerialParams(device="socket://…")` |
+| A **Modbus gateway**, converting protocols (Moxa MGate, Waveshare in Modbus-gateway mode) | Modbus TCP, with an MBAP header and no CRC | `ModbusTcpParams(host=…)` |
 
 ```python
 from modbus_connection import ModbusTcpParams
 
-# A transparent serial server on the RS-485 line.
-connection = ModbusConnection(ModbusTcpParams(host="192.168.1.50", framer="rtu"))
+# A serial server forwarding the RS-485 line. Set baudrate to the speed the
+# box runs that line at: no port is opened here, but RTU separates frames by
+# 3.5 character times and the gap follows from the line speed.
+connection = ModbusConnection(
+    ModbusSerialParams(device="socket://192.168.1.50:8899", baudrate=19200)
+)
 
 # A Modbus gateway converting to RTU on the serial side.
-connection = ModbusConnection(ModbusTcpParams(host="192.168.1.50", framer="socket"))
+connection = ModbusConnection(ModbusTcpParams(host="192.168.1.50"))
 ```
 
-Many boxes do either, depending on how they are configured, and nothing on the
-wire announces which. If reads time out against a box you believe is wired
-correctly, try the other framing before suspecting the appliance.
+An IPv6 address needs brackets: `socket://[fe80::1%eth0]:8899`. `rfc2217://`
+works too and negotiates the line settings with the box, and
+`esphome://host/?port_name=…` reaches an
+[ESPHome serial proxy](https://esphome.io/projects/?type=serial).
 
-`framer="socket"` is `ModbusTcpParams`'s default, so a gateway needs only the
-host. Nothing else in this library changes with the transport.
-
-A transparent server can also be reached as a serial target, since
-modbus-connection's serial transport takes a URL — `socket://host:port`,
-`rfc2217://host:port`, or `esphome://host/?port_name=…` for an
-[ESPHome serial proxy](https://esphome.io/projects/?type=serial). Prefer
-`ModbusTcpParams(framer="rtu")` where something else may reach the same box:
-consumers that describe one endpoint the same way share a connection, and on
-a half-duplex line that sharing is what keeps two of them from interleaving
-frames.
+Many boxes do either job, depending on how they are configured, and nothing on
+the wire announces which. If reads time out against a box you believe is wired
+and addressed correctly, try the other before suspecting the appliance.
 
 One appliance object models one appliance, so build one per unit id. Several
 cascaded appliances reach the consumer as several unit ids on one connection:
@@ -182,9 +179,12 @@ is the quickest way to see whether it is wired and addressed correctly:
 
 ```bash
 uv run script/query.py /dev/ttyUSB0 --unit 20 --baudrate 19200 --parity E
-uv run script/query.py 192.168.1.50 --transport tcp --unit 20          # serial server
-uv run script/query.py 192.168.1.50 --transport tcp --framer socket --unit 20  # gateway
+uv run script/query.py socket://192.168.1.50:8899 --unit 20 --baudrate 19200
+uv run script/query.py 192.168.1.50 --transport tcp --unit 20
 ```
+
+The first reaches a local adapter, the second a serial server, the third a
+Modbus gateway. There is no `--framer`: each transport has one framing here.
 
 It probes for the optional modules, prints each sub-system under its own
 heading, names any that did not answer, and finishes with the read count — so
