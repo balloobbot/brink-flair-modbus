@@ -196,10 +196,11 @@ the numbers above are visible against real hardware and not only in the tests.
 uv run script/query.py /dev/ttyUSB0 --unit 20 --baudrate 19200 --parity E --raw
 ```
 
-Attach that to an issue. It says what the appliance really sent, whatever
-this library made of it, and it loads into a test with modbus-connection's
-[`load_raw`](https://home-assistant-libs.github.io/modbus-connection/patterns/testing/#replaying-a-raw-snapshot),
-so a report becomes a regression test with no hardware. It costs a second
+Attach that to an issue. It quotes the registers, not the values this library
+decoded from them, so a wrong reading is visible rather than plausible.
+modbus-connection's
+[`load_raw`](https://home-assistant-libs.github.io/modbus-connection/patterns/testing/#replaying-a-raw-snapshot)
+loads the dump into the mock, so the report becomes a test. It costs a second
 pass over the registers, which is why it is not the default.
 
 ## Writing

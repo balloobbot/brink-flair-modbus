@@ -69,9 +69,9 @@ async def test_nothing_raises_on_an_appliance_that_answered_zero(
 async def test_the_raw_dump_survives_being_written_down(appliance: BrinkFlair) -> None:
     """``--raw`` prints this, and an issue carries it as JSON.
 
-    JSON has no integer keys, so every address is written as a string. A
-    maintainer replaying the dump needs them to come back as the numbers
-    they were, which is what modbus-connection's ``load_raw`` does.
+    JSON has no integer keys, so every address is written as a string.
+    Replaying the dump needs them back as numbers, which is what
+    modbus-connection's ``load_raw`` does.
     """
     raw = await appliance.async_read_raw()
 

@@ -13,9 +13,9 @@ beyond how to reach it.
     uv run script/query.py socket://192.168.1.50:8899 --unit 20 --baudrate 19200
     uv run script/query.py 192.168.1.50 --transport tcp --unit 20
 
-``--raw`` adds the registers the appliance answered with, undecoded, as JSON.
-Attach that to an issue: it says what the appliance really sent, whatever
-this library made of it, and it loads straight into the tests.
+``--raw`` adds the registers as the appliance returned them, as JSON. Attach
+that to an issue: it quotes the registers rather than the values this library
+decoded from them, and it loads into a test.
 """
 
 from __future__ import annotations
@@ -69,8 +69,9 @@ async def main() -> int:
     try:
         report = await appliance.async_update()
         if args.raw:
-            # A second pass: async_update reports what failed where a raw read
-            # would raise, and a dump is wanted most where something is wrong.
+            # A second pass. async_update reports which sub-systems failed,
+            # where a raw read raises on the first one, and a dump is wanted
+            # most when something is wrong.
             raw = await appliance.async_read_raw()
     except ModbusError as err:
         print(f"Could not read the appliance: {err}")
