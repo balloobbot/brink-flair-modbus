@@ -276,6 +276,21 @@ async def test_settings(appliance: BrinkFlair) -> None:
     assert p.modbus_speed is BaudRate.BPS_19200
 
 
+def test_every_baud_rate_code_names_its_line_speed() -> None:
+    """A consumer paces its frames from the speed, not from the code."""
+    assert BaudRate.BPS_19200.bits_per_second == 19200
+    assert [rate.bits_per_second for rate in BaudRate] == [
+        1200,
+        2400,
+        4800,
+        9600,
+        19200,
+        38400,
+        57600,
+        115200,
+    ]
+
+
 async def test_the_settings_are_not_read_by_a_readings_poll(
     appliance: BrinkFlair, mock_modbus_unit: MockModbusUnit
 ) -> None:

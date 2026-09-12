@@ -294,6 +294,16 @@ class BaudRate(IntEnum):
     BPS_57600 = 6
     BPS_115200 = 7
 
+    @property
+    def bits_per_second(self) -> int:
+        """The line speed this code stands for.
+
+        A consumer reaching the appliance through a serial server needs it:
+        the box holds the line settings, but RTU separates frames by 3.5
+        character times, and that gap follows from the speed.
+        """
+        return int(self.name.removeprefix("BPS_"))
+
 
 class ModbusControl(IntEnum):
     """Whether Modbus drives the appliance, remote-control register 8000."""
