@@ -30,10 +30,11 @@ from modbus_connection.cli_helper import (
 from brink_flair_modbus import BrinkFlair
 
 # The appliance speaks Modbus RTU on RS-485 and nothing else. The serial
-# transport covers a local adapter and a serial server alike, since the
-# target may be a socket:// URL. The tcp transport covers a Modbus gateway,
-# which speaks Modbus TCP on the network and re-frames to RTU on the serial
-# side. Each takes its own default framing, so neither needs a --framer.
+# transport reaches a local adapter or a serial server, since the target may
+# be a socket:// URL, and the tcp transport reaches a Modbus gateway. Both are
+# what the library offers by default; they are named here to put serial
+# first, so --transport defaults to the way an RS-485 appliance is usually
+# wired.
 CONNECTIONS = (("serial", None), ("tcp", None))
 
 DEFAULT_UNIT = 20
