@@ -282,58 +282,13 @@ address" column gives them.
 
 ## Where the spec is unclear
 
-None of these is resolved here — the model follows the document, and each is
-recorded so anyone with an appliance on the bench can settle it.
+The document contradicts itself in places, and no appliance has checked any
+of it. Every such point is tracked in
+[`docs/open-questions.md`](docs/open-questions.md), with what this library
+assumes, what settling it would change, and how to settle it. Most of them
+close with one run of `script/query.py --raw`.
 
-**Whether the appliance answers for its gaps.** The one unknown with a
-measurable cost, and the reason a poll takes 19 requests rather than 4. See
-[What a poll costs](#what-a-poll-costs).
-
-**The word order of the 32-bit counters.** Operating time, filter flow and
-total flow each span two registers, and the document states no word order for
-them. They decode high word first, the Modbus convention and
-modbus-connection's default. A wrong guess here is obvious against hardware:
-`operating_time` would read in the millions.
-
-**The date registers do not decode.** 4111 is labelled "Date high nibble" and
-4112 "Date lower nibbles", while the description spanning both says "high byte
-= days, low byte = years ... only decennia". Nibbles and bytes cannot both be
-right, and neither account has room for a month. Both words are exposed raw as
-`date_high` and `date_low`. The time at 4110 is unambiguous and decodes to a
-`datetime.time`.
-
-**The bypass status names two codes "open".** Register 4050's list reads
-"initialize / open / close / open / closed". Read as a moving valve and a
-settled one, 1/2 are the movement and 3/4 the position, which is the only
-reading that gives all five codes a distinct meaning. `BypassStatus` is named
-that way; the document does not say so.
-
-**The UIF module reports two software versions.** 4400-4402 and 4413-4415 are
-listed under the same description with the same example, and nothing
-distinguishes them. Both are exposed, as `software_version` and
-`second_software_version`.
-
-**Hardware versions are bytes in one place and BCD in another.** The base
-module's 4003 is given as "Numbers in bytes range [00..99]"; the UIF's 4403 and
-the extension's 4503 as "Major and minor in BCD format". Each is decoded as its
-own row states. The two agree for any number below 10, so an appliance can only
-settle this once a version reaches double figures.
-
-**"Filters used in m3/h" is a volume.** The units column of 4116-4117 and
-4118-4119 reads `m3/h` for what the same row's text calls an "amount of flow
-... since last filter reset". They are exposed in `m³`.
-
-**Baud-rate codes 6 and 7 are written loosely.** The spec gives them as "56k"
-and "115k", and the appliance's own settings menu as "56k" and "115k2". Both
-are the usual 57600 and 115200, which is what `BaudRate.BPS_57600` and
-`BPS_115200` are named for.
-
-**The four-position switch default is bounded to two.** Register 6031 is
-described as the default position of a four-position switch while its own row
-gives minimum 0 and maximum 1. The row's bounds are enforced.
-
-**Codes 0 and 1 of the fan status are unassigned.** 4030 and 4040 list codes 2
-to 6. Either of the two below them decodes to `None`.
+If you have an appliance on the bench, that file is the place to start.
 
 ## License
 
